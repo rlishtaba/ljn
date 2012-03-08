@@ -58,6 +58,14 @@ class Article(BaseModel):
             raise Exception('Invalid category type: %s' % type(category))
         self.url = url
 
+    @staticmethod
+    def find_by_id(session, id):
+        return session.query(Article).filter(Article.id == id).first()
+
+    @staticmethod
+    def all(session):
+        return session.query(Article).all()
+
 
 class Word(BaseModel):
     __tablename__ = 'words'
