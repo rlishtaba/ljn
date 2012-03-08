@@ -1,7 +1,5 @@
 #coding:utf8
 from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QHBoxLayout
-from ljn.ui.component.ArticleBrowser import ArticleBrowser
-from ljn.ui.component.CategoryList import CategoryList
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -19,12 +17,38 @@ class MainWindow(QMainWindow):
         return w
 
     def _create_article_browser(self, parent):
+        from ljn.ui.component.ArticleBrowser import ArticleBrowser
         self.article_browser = ab = ArticleBrowser(parent)
         ab.setReadOnly(True)
         return ab
 
     def _create_lists(self, parent):
+        from ljn.ui.component.CategoryList import CategoryList
+        from ljn.ui.component.ArticleList import ArticleList
         self.category_list = cl = CategoryList(parent)
-        layout = QStackedLayout()
-        layout.addWidget(self.category_list)
+        cl.itemDoubleClicked.connect(self._open_category)
+
+        self.article_list = al = ArticleList(parent)
+        al.itemDoubleClicked.connect(self._open_article)
+
+
+        self.list_layout = layout = QStackedLayout()
+        layout.addWidget(cl)
+        layout.addWidget(al)
         return layout
+
+    def _open_category(self, item):
+        from ljn.ui.component.CategoryList import CategoryItem
+        if not isinstance(item, CategoryItem):
+            return
+
+        self.article_list.update_articles(item.category)
+        self.list_layout.setCurrentWidget(self.article_list)
+
+    def _open_article(self, item):
+        from ljn.ui.component.ArticleList import ArticleItem
+        if not isinstance(item, ArticleItem):
+            self.list_layout.setCurrentWidget(self.category_list)
+            return
+
+        self.article_browser.set_article(item.article)
