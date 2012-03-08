@@ -14,7 +14,8 @@ def init():
     from sqlalchemy import create_engine
 
     DB_FILE = join(DATA_DIR, 'ljn.db')
-    BaseModel.metadata.create_all(create_engine('sqlite:///' + DB_FILE.replace('\\', '/')))
+    BaseModel.metadata.bind = create_engine('sqlite:///' + DB_FILE.replace('\\', '/'), echo=True)
+    BaseModel.metadata.create_all()
 
 
 class Category(BaseModel):
@@ -27,6 +28,11 @@ class Category(BaseModel):
 
     def __init__(self, name):
         self.name = name
+
+    @staticmethod
+    def all(session):
+        """ @rtype: list of Category """
+        return session.query(Category).order_by(Category.name).all()
 
     @staticmethod
     def find_by_name(session, name):
