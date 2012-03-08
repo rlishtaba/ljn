@@ -11,10 +11,10 @@ class ArticleEditor(QDialog):
 
         self.article = article
         layout = QFormLayout(self)
-        layout.addRow('Title', self._create_title())
-        layout.addRow('Author', self._create_author())
-        layout.addRow('URL', self._create_url())
-        layout.addRow('Content', self._create_content())
+        layout.addRow('&Title', self._create_title())
+        layout.addRow('&Author', self._create_author())
+        layout.addRow('&URL', self._create_url())
+        layout.addRow('&Content', self._create_content())
         layout.addRow(self._create_buttons())
 
     def _create_buttons(self):
@@ -40,11 +40,11 @@ class ArticleEditor(QDialog):
         return self.content_edit
 
     def get_article(self):
-        content = unicode(self.content_edit.toPlainText())
-        title = unicode(self.title_edit.text())
-        author = str(self.author_edit.text())
-        url = str(self.url_edit.text())
-        return Article(content, None, title, author, url)
+        self.article.content = unicode(self.content_edit.toPlainText())
+        self.article.title = unicode(self.title_edit.text())
+        self.article.author = str(self.author_edit.text())
+        self.article.url = str(self.url_edit.text())
+        return self.article
 
 
 def create_new_article(parent):
@@ -56,9 +56,6 @@ def create_new_article(parent):
 
 def edit_article(article, parent):
     dlg = ArticleEditor(article, 'Edit article', parent)
-    dlg.exec_()
     if dlg.exec_() == QDialog.Accepted:
-        a = dlg.get_article()
-        a.category_id = article.category.id
-        return a
+        return dlg.get_article()
     return None
