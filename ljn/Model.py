@@ -41,13 +41,15 @@ class Article(BaseModel):
     title = Column(UnicodeText)
     content = Column(UnicodeText)
     url = Column(String)
+    author = Column(String)
     category_id = Column(Integer, ForeignKey('categories.id'))
     new_words = relationship("ArticleNewWord", backref="article")
     create_date = Column(DateTime, default=datetime.now)
 
-    def __init__(self, content, category, title=u'', url=u''):
+    def __init__(self, content, category, title=u'', author='', url=''):
         self.content = content
         self.title = title
+        self.author = author
         if isinstance(category, Category):
             self.category = category
         elif isinstance(category, int):
