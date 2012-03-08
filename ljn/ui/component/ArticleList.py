@@ -2,6 +2,7 @@
 from PyQt4.QtGui import QListWidget, QListWidgetItem, QAction, QInputDialog, QMessageBox
 from ljn.Model import Article, Category
 from ljn.Repository import get_session
+from ljn.ui.component import ArticleEditor
 
 class ArticleItem(QListWidgetItem):
     def __init__(self, article):
@@ -18,6 +19,13 @@ class ArticleList(QListWidget):
         self.update_articles()
         self.addAction(self._create_rename_action())
         self.addAction(self._create_delete_action())
+        self.addAction(self._create_new_action())
+
+    def _create_new_action(self):
+        n = QAction("New", self)
+        n.setShortcut("CTRL+N")
+        n.triggered.connect(self._new_article)
+        return n
 
     def _create_rename_action(self):
         a = QAction("Rename", self)
@@ -47,6 +55,19 @@ class ArticleList(QListWidget):
         if category is not None:
             for a in category.articles:
                 self.addItem(ArticleItem(a))
+
+
+    def _new_article(self):
+        article = ArticleEditor.create_new_article(self)
+        if article is None:
+            return
+
+        article.category_id = self.category_id
+        s = get_session()
+        s.add(article)
+        s.commit()
+        self.update_articles()
+
 
     def _rename_article(self):
         items = self.selectedItems()
