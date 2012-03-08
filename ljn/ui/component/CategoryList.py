@@ -17,6 +17,13 @@ class CategoryList(QListWidget):
         self.update_categories()
         self.addAction(self._create_rename_action())
         self.addAction(self._create_delete_action())
+        self.addAction(self._create_new_action())
+
+    def _create_new_action(self):
+        n = QAction("New", self)
+        n.setShortcut("CTRL+N")
+        n.triggered.connect(self._new_category)
+        return n
 
     def _create_rename_action(self):
         a = QAction("Rename", self)
@@ -34,6 +41,21 @@ class CategoryList(QListWidget):
         self.clear()
         for c in Category.all(get_session()):
             self.addItem(CategoryItem(c))
+
+    def _new_category(self):
+        text, result = QInputDialog.getText(self, 'New category', 'New category name:')
+        if not result:
+            return
+
+        text = str(text)
+        if not text:
+            return
+
+        s = get_session()
+        s.add(Category(text))
+        s.commit()
+        self.update_categories()
+
 
     def _rename_category(self):
         items = self.selectedItems()
