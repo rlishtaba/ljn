@@ -1,23 +1,30 @@
 #coding:utf8
-from PyQt4.QtGui import QMainWindow
+from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QHBoxLayout
+from ljn.ui.component.ArticleBrowser import ArticleBrowser
+from ljn.ui.component.CategoryList import CategoryList
 
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.setWindowTitle(u'LJ Notes')
 
-        self._create_menu()
+        self.setCentralWidget(self._create_central_widget())
+        self.resize(800, 600)
 
-    def _create_menu(self):
-        self._create_article_menu()
+    def _create_central_widget(self):
+        w = QWidget(self)
+        layout = QHBoxLayout(w)
+        layout.addLayout(self._create_lists(w))
+        layout.addWidget(self._create_article_browser(w), 1)
+        return w
 
-    def _create_article_menu(self):
-        m = self.menuBar().addMenu(u'&Articles')
-        m.addAction(u'New ...').triggered.connect(self._on_new_article)
-        m.addAction(u'Delete').triggered.connect(self._on_delete_article)
+    def _create_article_browser(self, parent):
+        self.article_browser = ab = ArticleBrowser(parent)
+        ab.setReadOnly(True)
+        return ab
 
-    def _on_new_article(self):
-        print 'new article'
-
-    def _on_delete_article(self):
-        print 'delete article'
+    def _create_lists(self, parent):
+        self.category_list = cl = CategoryList(parent)
+        layout = QStackedLayout()
+        layout.addWidget(self.category_list)
+        return layout
