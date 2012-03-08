@@ -23,11 +23,15 @@ class Category(BaseModel):
     id = Column(Integer, primary_key=True)
     name = Column(UnicodeText)
     articles = relationship("Article", backref="category")
-    create_date = Column(DateTime)
+    create_date = Column(DateTime, default=datetime.now)
 
     def __init__(self, name):
         self.name = name
-        self.create_date = datetime.now()
+
+    @staticmethod
+    def find_by_name(session, name):
+        """ @rtype: Category """
+        return session.query(Category).filter(Category.name == name).first()
 
 
 class Article(BaseModel):
@@ -39,7 +43,7 @@ class Article(BaseModel):
     url = Column(String)
     category_id = Column(Integer, ForeignKey('categories.id'))
     new_words = relationship("ArticleNewWord", backref="article")
-    create_date = Column(DateTime)
+    create_date = Column(DateTime, default=datetime.now)
 
     def __init__(self, content, category, title=u'', url=u''):
         self.content = content
@@ -51,7 +55,6 @@ class Article(BaseModel):
         else:
             raise Exception('Invalid category type: %s' % type(category))
         self.url = url
-        self.create_date = datetime.now()
 
 
 class Word(BaseModel):
@@ -60,11 +63,10 @@ class Word(BaseModel):
     id = Column(Integer, primary_key=True)
     word = Column(String)
     article_new_words = relationship("ArticleNewWord", backref="word")
-    create_date = Column(DateTime)
+    create_date = Column(DateTime, default=datetime.now)
 
     def __init__(self, word):
         self.word = word
-        self.create_date = datetime.now()
 
 class ArticleNewWord(BaseModel):
     __tablename__ = 'articlenewwords'
@@ -72,7 +74,7 @@ class ArticleNewWord(BaseModel):
     article_id = Column(Integer, ForeignKey('articles.id'), primary_key=True)
     word_id = Column(Integer, ForeignKey('words.id'), primary_key=True)
     word_content = Column(String, primary_key=True)
-    create_date = Column(DateTime)
+    create_date = Column(DateTime, default=datetime.now)
 
     def __init__(self, article, word, word_content):
         if isinstance(article, Article):
@@ -90,4 +92,3 @@ class ArticleNewWord(BaseModel):
             raise Exception('Invalid word type: %s' % type(word))
 
         self.word_content = word_content
-        self.create_date = datetime.now()
