@@ -65,7 +65,7 @@ class Article(BaseModel):
             self.category = category
         elif isinstance(category, int):
             self.category_id = category
-        else:
+        elif category is not None:
             raise Exception('Invalid category type: %s' % type(category))
         self.url = url
 
