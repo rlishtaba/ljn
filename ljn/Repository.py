@@ -23,6 +23,6 @@ def init():
     s.commit()
 
 def get_session():
-    """ @rtype: Session """
+    """ @rtype: sqlalchemy.orm.session.Session """
     return session_maker()
 
