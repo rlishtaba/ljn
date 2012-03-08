@@ -2,7 +2,7 @@
 from PyQt4.QtGui import QApplication
 
 def init():
-    from ljn.repository.Repository import init as repo_init
+    from ljn.Repository import init as repo_init
     repo_init()
 
 

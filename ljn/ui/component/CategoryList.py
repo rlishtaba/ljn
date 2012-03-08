@@ -1,7 +1,7 @@
 #coding:utf8
 from PyQt4.QtGui import QListWidget, QListWidgetItem
 from ljn.Model import Category
-from ljn.repository.Repository import get_session
+from ljn.Repository import get_session
 
 class CategoryItem(QListWidgetItem):
     def __init__(self, category):

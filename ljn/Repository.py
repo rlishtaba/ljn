@@ -1,6 +1,5 @@
 #coding:utf8
 
-from sqlalchemy.orm import sessionmaker
 session_maker = None
 
 def init():
@@ -8,6 +7,7 @@ def init():
     from ljn.Model import init as model_init, BaseModel, Category
     model_init()
 
+    from sqlalchemy.orm import sessionmaker
     session_maker = sessionmaker(BaseModel.metadata.bind)
     s = session_maker()
     if not len(Category.all(s)):
@@ -19,9 +19,3 @@ def get_session():
     """ @rtype: Session """
     return session_maker()
 
-
-class Repository(object):
-    def __init__(self):
-        from ArticleRepository import ArticleRepository
-
-        articles = ArticleRepository()
