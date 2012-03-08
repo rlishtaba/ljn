@@ -5,7 +5,7 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
 from ljn.Model import BaseModel, Category, Article, Word, ArticleNewWord
 
-class DbTestCase(TestCase):
+class ModelTestCase(TestCase):
     def setUp(self):
         engine = create_engine('sqlite:///:memory:', echo=True)
         BaseModel.metadata.create_all(engine)
@@ -15,8 +15,7 @@ class DbTestCase(TestCase):
         return self.session_maker()
 
 
-class TestCategory(DbTestCase):
-    def test(self):
+    def testCategory(self):
         s = self.session()
         s.add(Category(u'c1'))
 
@@ -35,8 +34,7 @@ class TestCategory(DbTestCase):
         self.assertIsNotNone(c.create_date)
 
 
-class TestArticle(DbTestCase):
-    def test(self):
+    def testArticle(self):
         s = self.session()
         c = Category(u'c1')
         a1 = Article(u'ac1', c, u'at1')
