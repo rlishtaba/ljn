@@ -14,6 +14,20 @@ class ModelTestCase(TestCase):
     def session(self):
         return self.session_maker()
 
+    def add_2_categories(self):
+        s = self.session()
+        s.add(Category(u'c1'))
+        s.add(Category(u'c2'))
+        s.commit()
+
+    def add_2_articles(self):
+        self.add_2_categories()
+        s = self.session()
+        a1 = Article(u'This is content of article 1', Category.find_by_name(s, u'c1'), u'Title of c1')
+        a2 = Article(u'This is content of article 2', Category.find_by_name(s, u'c2'), u'Title of c2')
+        s.add_all([a1, a2])
+        s.commit()
+
 
     def testCategory(self):
         s = self.session()
@@ -46,6 +60,11 @@ class ModelTestCase(TestCase):
         self.assertEqual(c, a2.category)
         self.assertEqual(c.articles, [a1, a2])
 
+
+    def testArticleNewWord(self):
+        self.add_2_articles()
+        s = self.session()
+        a1, a2 = Article.all(s)
         w1 = Word('this')
         w2 = Word('that')
         a1.new_words.append(ArticleNewWord(a1, w1, 'This'))
@@ -55,3 +74,7 @@ class ModelTestCase(TestCase):
 
         self.assertEqual(len(w1.article_new_words), 2)
         self.assertEqual(len(w2.article_new_words), 1)
+
+        self.assertEqual(len(a1.new_words), 3)
+        self.assertEqual(len(a2.new_words), 0)
+
