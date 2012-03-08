@@ -1,5 +1,7 @@
 #coding:utf8
 from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QHBoxLayout
+from ljn.Model import Category
+from ljn.Repository import get_session
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -42,7 +44,7 @@ class MainWindow(QMainWindow):
         if not isinstance(item, CategoryItem):
             return
 
-        self.article_list.update_articles(item.category)
+        self.article_list.update_articles(Category.find_by_id(get_session(), item.category.id))
         self.list_layout.setCurrentWidget(self.article_list)
 
     def _open_article(self, item):
