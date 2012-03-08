@@ -44,6 +44,9 @@ class ArticleEditor(QDialog):
         self.article.title = unicode(self.title_edit.text())
         self.article.author = str(self.author_edit.text())
         self.article.url = str(self.url_edit.text())
+
+        import re
+        self.article.content = re.sub(u'\\n+', u'\n\n', self.article.content)
         return self.article
 
 
