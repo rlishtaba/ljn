@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         if not isinstance(item, CategoryItem):
             return
 
-        self.article_list.update_articles(Category.find_by_id(get_session(), item.category.id))
+        self.article_list.update_articles(item.category.id)
         self.list_layout.setCurrentWidget(self.article_list)
 
     def _open_article(self, item):

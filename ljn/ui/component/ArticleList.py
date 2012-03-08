@@ -14,6 +14,7 @@ class ArticleList(QListWidget):
     def __init__(self, parent):
         QListWidget.__init__(self, parent)
 
+        self.category_id = None
         self.update_articles()
         self.addAction(self._create_rename_action())
         self.addAction(self._create_delete_action())
@@ -30,15 +31,22 @@ class ArticleList(QListWidget):
         a.triggered.connect(self._del_article)
         return a
 
-    def update_articles(self, category=None):
-        self.category = category
+    def update_articles(self, category_id=None):
         self.clear()
         self.addItem('..')
-        if category is None:
+
+        if category_id is None:
+            category_id = self.category_id
+
+        if category_id is None:
             return
 
-        for a in category.articles:
-            self.addItem(ArticleItem(a))
+        self.category_id = category_id
+        category = Category.find_by_id(get_session(), category_id)
+
+        if category is not None:
+            for a in category.articles:
+                self.addItem(ArticleItem(a))
 
     def _rename_article(self):
         items = self.selectedItems()
@@ -58,7 +66,7 @@ class ArticleList(QListWidget):
         a = Article.find_by_id(s, article.id)
         a.title = text
         s.commit()
-        self.update_articles(Category.find_by_id(get_session(), self.category.id))
+        self.update_articles()
 
 
     def _del_article(self):
@@ -75,4 +83,4 @@ class ArticleList(QListWidget):
         s = get_session()
         s.delete(Article.find_by_id(s, article.id))
         s.commit()
-        self.update_articles(Category.find_by_id(get_session(), self.category.id))
+        self.update_articles()
