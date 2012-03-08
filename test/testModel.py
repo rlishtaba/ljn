@@ -14,6 +14,7 @@ class DbTestCase(TestCase):
     def session(self):
         return self.session_maker()
 
+
 class TestCategory(DbTestCase):
     def test(self):
         s = self.session()
@@ -21,8 +22,7 @@ class TestCategory(DbTestCase):
 
         self.assertEqual(1, len(s.query(Category).all()))
 
-        c = s.query(Category).one()
-        "@type: Category"
+        c = Category.find_by_name(s, u'c1')
 
         self.assertEqual(c.name, u'c1')
         self.assertEqual(len(c.articles), 0)
@@ -31,6 +31,9 @@ class TestCategory(DbTestCase):
 
         s.add(Article(u'ac', c, u'at'))
         s.commit()
+
+        self.assertIsNotNone(c.create_date)
+
 
 class TestArticle(DbTestCase):
     def test(self):
