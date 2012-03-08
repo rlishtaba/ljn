@@ -39,6 +39,11 @@ class Category(BaseModel):
         """ @rtype: Category """
         return session.query(Category).filter(Category.name == name).first()
 
+    @staticmethod
+    def find_by_id(session, id):
+        """ @rtype: Category """
+        return session.query(Category).filter(Category.id == id).first()
+
 
 class Article(BaseModel):
     __tablename__ = 'articles'
