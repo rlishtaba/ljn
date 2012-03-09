@@ -32,6 +32,13 @@ class MainWindow(QMainWindow):
         action.triggered.connect(self._toggle_dock_pane_view)
         self.addAction(action)
 
+        action = QAction(self)
+        action.setShortcut("CTRL+W")
+        action.setShortcutContext(Qt.ApplicationShortcut)
+        action.triggered.connect(lambda : self.word_dock_pane.toggleViewAction().trigger())
+        self.addAction(action)
+
+
     def _create_dock_panes(self):
         self._create_list_dock_pane()
         self._create_word_dock_pane()
