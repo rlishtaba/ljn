@@ -12,6 +12,7 @@ QTextEdit {
     font-weight: 400;
     color: #3D3936;
     background-color: #F4EED9;
+    padding: 20px;
 }
 '''
 
