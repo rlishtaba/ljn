@@ -1,22 +1,23 @@
 #coding:utf8
-from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QHBoxLayout, QAction
-from ljn.Model import Category
-from ljn.Repository import get_session
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QAction, QDockWidget
 
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.setWindowTitle(u'LJ Notes')
 
-        self.setCentralWidget(self._create_central_widget())
+        self._create_dock_pane()
+
+        self.setCentralWidget(self._create_article_browser(self))
         self.resize(800, 600)
 
-    def _create_central_widget(self):
-        w = QWidget(self)
-        layout = QHBoxLayout(w)
-        layout.addLayout(self._create_lists(w))
-        layout.addWidget(self._create_article_browser(w), 1)
-        return w
+    def _create_dock_pane(self):
+        self.dock_pane = d = QDockWidget(self)
+        d.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        d.setAllowedAreas(Qt.LeftDockWidgetArea)
+        d.setWidget(self._create_lists())
+        self.addDockWidget(Qt.LeftDockWidgetArea, d)
 
     def _create_article_browser(self, parent):
         from ljn.ui.component.ArticleBrowser import ArticleBrowser
@@ -24,12 +25,13 @@ class MainWindow(QMainWindow):
         ab.setReadOnly(True)
         return ab
 
-    def _create_lists(self, parent):
-        self.list_layout = layout = QStackedLayout()
-        layout.addWidget(self._create_category_list(parent))
-        layout.addWidget(self._create_article_list(parent))
-        layout.setCurrentWidget(self.category_list)
-        return layout
+    def _create_lists(self):
+        w = QWidget(self)
+        self.list_layout = layout = QStackedLayout(w)
+        layout.addWidget(self._create_category_list(w))
+        layout.addWidget(self._create_article_list(w))
+        self._show_category_list()
+        return w
 
     def _create_category_list(self, parent):
         from ljn.ui.component.CategoryList import CategoryList
@@ -53,7 +55,7 @@ class MainWindow(QMainWindow):
 
         action = QAction(al)
         action.setShortcut("Backspace")
-        action.triggered.connect(lambda : self.list_layout.setCurrentWidget(self.category_list))
+        action.triggered.connect(self._show_category_list)
         al.addAction(action)
 
         return al
@@ -69,7 +71,7 @@ class MainWindow(QMainWindow):
             return
 
         self.article_list.update_articles(item.category.id)
-        self.list_layout.setCurrentWidget(self.article_list)
+        self._show_article_list()
 
     def _open_article(self):
         items = self.article_list.selectedItems()
@@ -79,7 +81,15 @@ class MainWindow(QMainWindow):
         item = items[0]
         from ljn.ui.component.ArticleList import ArticleItem
         if not isinstance(item, ArticleItem):
-            self.list_layout.setCurrentWidget(self.category_list)
+            self._show_category_list()
             return
 
         self.article_browser.set_article(item.article)
+
+    def _show_category_list(self):
+        self.dock_pane.setWindowTitle("Category List")
+        self.list_layout.setCurrentWidget(self.category_list)
+
+    def _show_article_list(self):
+        self.dock_pane.setWindowTitle("Article List (%s)")
+        self.list_layout.setCurrentWidget(self.article_list)
