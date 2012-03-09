@@ -2,6 +2,13 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QAction, QDockWidget
 
+def _create_widget_action(parent, shortcut, func):
+    action = QAction(parent)
+    action.setShortcut(shortcut)
+    action.setShortcutContext(Qt.WidgetShortcut)
+    action.triggered.connect(func)
+    return action
+
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
@@ -11,6 +18,10 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self._create_article_browser(self))
         self.resize(800, 600)
+
+        action = _create_widget_action(self, "ESC", self.article_browser.setFocus)
+        self.article_list.addAction(action)
+        self.category_list.addAction(action)
 
     def _create_dock_pane(self):
         self.dock_pane = d = QDockWidget(self)
@@ -23,6 +34,7 @@ class MainWindow(QMainWindow):
         from ljn.ui.component.ArticleBrowser import ArticleBrowser
         self.article_browser = ab = ArticleBrowser(parent)
         ab.setReadOnly(True)
+        ab.addAction(_create_widget_action(ab, "ESC", self._set_focus_to_list))
         return ab
 
     def _create_lists(self):
@@ -37,28 +49,22 @@ class MainWindow(QMainWindow):
         from ljn.ui.component.CategoryList import CategoryList
         self.category_list = cl = CategoryList(parent)
         cl.itemDoubleClicked.connect(self._open_category)
-        action = QAction(cl)
-        action.setShortcut("Return")
-        action.triggered.connect(self._open_category)
-        cl.addAction(action)
+        cl.addAction(_create_widget_action(cl, "Return", self._open_category))
         return cl
 
     def _create_article_list(self, parent):
         from ljn.ui.component.ArticleList import ArticleList
         self.article_list = al = ArticleList(parent)
         al.itemDoubleClicked.connect(self._open_article)
-
-        action = QAction(al)
-        action.setShortcut("Return")
-        action.triggered.connect(self._open_article)
-        al.addAction(action)
-
-        action = QAction(al)
-        action.setShortcut("Backspace")
-        action.triggered.connect(self._show_category_list)
-        al.addAction(action)
-
+        al.addAction(_create_widget_action(al, "Return", self._open_article))
+        al.addAction(_create_widget_action(al, "Backspace", self._show_category_list))
         return al
+
+    def _set_focus_to_list(self):
+        if self.article_list.isVisible():
+            self.article_list.setFocus()
+        else:
+            self.category_list.setFocus()
 
     def _get_selected_category_id(self):
         items = self.category_list.selectedItems()
