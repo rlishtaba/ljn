@@ -8,13 +8,23 @@ from sqlalchemy.orm import relationship
 
 BaseModel = declarative_base()
 
+def init_sqlite_foreign_key(engine):
+    def enable_foreign_key(conn, *args):
+        conn.execute('PRAGMA foreign_keys=ON')
+
+    from sqlalchemy.event import listen
+    listen(engine, 'connect', enable_foreign_key)
+
+
 def init():
     from os.path import join
     from g import DATA_DIR
     from sqlalchemy import create_engine
 
     DB_FILE = join(DATA_DIR, 'ljn.db')
-    BaseModel.metadata.bind = create_engine('sqlite:///' + DB_FILE.replace('\\', '/'), echo=True)
+    BaseModel.metadata.bind = engine = create_engine('sqlite:///' + DB_FILE.replace('\\', '/'), echo=True)
+    init_sqlite_foreign_key(engine)
+
     BaseModel.metadata.create_all()
 
 
@@ -23,7 +33,7 @@ class Category(BaseModel):
 
     id = Column(Integer, primary_key=True)
     name = Column(UnicodeText)
-    articles = relationship("Article", backref="category")
+    articles = relationship("Article", cascade="all,delete", backref="category")
     create_date = Column(DateTime, default=datetime.now)
 
     def __init__(self, name):
@@ -54,7 +64,7 @@ class Article(BaseModel):
     url = Column(String)
     author = Column(String)
     category_id = Column(Integer, ForeignKey('categories.id'))
-    new_words = relationship("ArticleNewWord", backref="article")
+    new_words = relationship("ArticleNewWord", cascade="all,delete", backref="article")
     create_date = Column(DateTime, default=datetime.now)
 
     def __init__(self, content, category, title=u'', author='', url=''):
@@ -85,7 +95,7 @@ class Word(BaseModel):
 
     id = Column(Integer, primary_key=True)
     word = Column(String)
-    article_new_words = relationship("ArticleNewWord", backref="word")
+    article_new_words = relationship("ArticleNewWord", cascade="all,delete", backref="word")
     create_date = Column(DateTime, default=datetime.now)
 
     def __init__(self, word):

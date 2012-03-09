@@ -3,11 +3,12 @@
 from unittest import TestCase
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import sessionmaker
-from ljn.Model import BaseModel, Category, Article, Word, ArticleNewWord
+from ljn.Model import BaseModel, Category, Article, Word, ArticleNewWord, init_sqlite_foreign_key
 
 class ModelTestCase(TestCase):
     def setUp(self):
         engine = create_engine('sqlite:///:memory:', echo=True)
+        init_sqlite_foreign_key(engine)
         BaseModel.metadata.create_all(engine)
         self.session_maker = sessionmaker(engine)
 
@@ -46,6 +47,12 @@ class ModelTestCase(TestCase):
         s.commit()
 
         self.assertIsNotNone(c.create_date)
+        self.assertEqual(len(c.articles), 1)
+
+        s.delete(c)
+        s.commit()
+
+        self.assertEqual(len(Article.all(s)), 0)
 
 
     def testArticle(self):
@@ -78,3 +85,8 @@ class ModelTestCase(TestCase):
         self.assertEqual(len(a1.new_words), 3)
         self.assertEqual(len(a2.new_words), 0)
 
+        s.delete(a1)
+        s.commit()
+
+        self.assertEqual(len(w1.article_new_words), 0)
+        self.assertEqual(len(w2.article_new_words), 0)
