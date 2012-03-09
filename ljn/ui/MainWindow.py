@@ -60,17 +60,24 @@ class MainWindow(QMainWindow):
 
         return al
 
-    def _open_category(self):
+    def _get_selected_category_id(self):
         items = self.category_list.selectedItems()
         if not items:
-            return
+            return None
 
         item = items[0]
         from ljn.ui.component.CategoryList import CategoryItem
         if not isinstance(item, CategoryItem):
+            return None
+
+        return item.category.id
+
+    def _open_category(self):
+        id = self._get_selected_category_id()
+        if id is None:
             return
 
-        self.article_list.update_articles(item.category.id)
+        self.article_list.update_articles(id)
         self._show_article_list()
 
     def _open_article(self):
@@ -91,5 +98,12 @@ class MainWindow(QMainWindow):
         self.list_layout.setCurrentWidget(self.category_list)
 
     def _show_article_list(self):
-        self.dock_pane.setWindowTitle("Article List (%s)")
+        from ljn.Model import Category
+        from ljn.Repository import get_session
+        id = self._get_selected_category_id()
+        if id is not None:
+            msg = ' (%s)' % Category.find_by_id(get_session(), id).name
+        else:
+            msg = ''
+        self.dock_pane.setWindowTitle("Article List" + msg)
         self.list_layout.setCurrentWidget(self.article_list)

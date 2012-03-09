@@ -41,23 +41,20 @@ class ArticleList(QListWidget):
 
     def update_articles(self, category_id=None):
         self.clear()
+        self.addItem('..')
 
         if category_id is None:
             category_id = self.category_id
 
         if category_id is None:
-            self.addItem('..')
             return
 
         self.category_id = category_id
         category = Category.find_by_id(get_session(), category_id)
 
         if category is not None:
-            self.addItem('.. (%s)' % category.name)
             for a in category.articles:
                 self.addItem(ArticleItem(a))
-        else:
-            self.addItem('..')
 
 
     def _new_article(self):
