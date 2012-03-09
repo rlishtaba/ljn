@@ -71,10 +71,12 @@ class Article(BaseModel):
 
     @staticmethod
     def find_by_id(session, id):
+        """ @rtype: Article """
         return session.query(Article).filter(Article.id == id).first()
 
     @staticmethod
     def all(session):
+        """ @rtype: list of Article """
         return session.query(Article).all()
 
 
