@@ -26,8 +26,9 @@ class MainWindow(QMainWindow):
 
     def _create_lists(self, parent):
         self.list_layout = layout = QStackedLayout()
+        layout.addWidget(self._create_category_list(parent))
         layout.addWidget(self._create_article_list(parent))
-        layout.addWidget(self._create_article_list(parent))
+        layout.setCurrentWidget(self.category_list)
         return layout
 
     def _create_category_list(self, parent):
@@ -44,6 +45,17 @@ class MainWindow(QMainWindow):
         from ljn.ui.component.ArticleList import ArticleList
         self.article_list = al = ArticleList(parent)
         al.itemDoubleClicked.connect(self._open_article)
+
+        action = QAction(al)
+        action.setShortcut("Return")
+        action.triggered.connect(self._open_article)
+        al.addAction(action)
+
+        action = QAction(al)
+        action.setShortcut("Backspace")
+        action.triggered.connect(lambda : self.list_layout.setCurrentWidget(self.category_list))
+        al.addAction(action)
+
         return al
 
     def _open_category(self):
@@ -59,7 +71,12 @@ class MainWindow(QMainWindow):
         self.article_list.update_articles(item.category.id)
         self.list_layout.setCurrentWidget(self.article_list)
 
-    def _open_article(self, item):
+    def _open_article(self):
+        items = self.article_list.selectedItems()
+        if not items:
+            return
+
+        item = items[0]
         from ljn.ui.component.ArticleList import ArticleItem
         if not isinstance(item, ArticleItem):
             self.list_layout.setCurrentWidget(self.category_list)
