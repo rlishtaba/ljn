@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.addAction(action)
 
     def _create_dock_pane(self):
-        self.dock_pane = d = QDockWidget(self)
+        self.list_dock_pane = d = QDockWidget(self)
         d.setFeatures(QDockWidget.NoDockWidgetFeatures)
         d.setAllowedAreas(Qt.LeftDockWidgetArea)
         d.setWidget(self._create_lists())
@@ -76,9 +76,9 @@ class MainWindow(QMainWindow):
             self.category_list.setFocus()
 
     def _toggle_dock_pane_view(self):
-        self.dock_pane.toggleViewAction().trigger()
+        self.list_dock_pane.toggleViewAction().trigger()
 
-        if self.dock_pane.isVisible():
+        if self.list_dock_pane.isVisible():
             self._set_focus_to_list()
 
     def _get_selected_category_id(self):
@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
         self.article_browser.set_article(Article.find_by_id(get_session(), item.article.id))
 
     def _show_category_list(self):
-        self.dock_pane.setWindowTitle("Category List")
+        self.list_dock_pane.setWindowTitle("Category List")
         self.list_layout.setCurrentWidget(self.category_list)
 
     def _show_article_list(self):
@@ -130,5 +130,5 @@ class MainWindow(QMainWindow):
             msg = ' (%s)' % Category.find_by_id(get_session(), id).name
         else:
             msg = ''
-        self.dock_pane.setWindowTitle("Article List" + msg)
+        self.list_dock_pane.setWindowTitle("Article List" + msg)
         self.list_layout.setCurrentWidget(self.article_list)
