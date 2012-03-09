@@ -137,3 +137,8 @@ class ArticleNewWord(BaseModel):
         """ @rtype: ArticleNewWord """
         query = session.query(ArticleNewWord).filter(ArticleNewWord.article_id == article_id)
         return query.filter(ArticleNewWord.word_content == word_content).first()
+
+    @staticmethod
+    def all_article_new_word(session, article_id):
+        """ @rtype: list of ArticleNewWord """
+        return session.query(ArticleNewWord).filter(ArticleNewWord.article_id == article_id).all()
