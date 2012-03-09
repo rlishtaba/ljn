@@ -123,6 +123,10 @@ class ArticleBrowser(QTextEdit):
             s.add(nw)
             s.commit()
 
+            cursor = self.textCursor()
+            cursor.clearSelection()
+            self.setTextCursor(cursor)
+
         else:
             s = get_session()
             s.delete(ArticleNewWord.find_by_article_word(s, self.article_id, word))
