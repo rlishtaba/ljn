@@ -1,5 +1,5 @@
 #coding:utf8
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, pyqtSignal
 from PyQt4.QtGui import QTextEdit, QColor, QSyntaxHighlighter, QTextCharFormat, QTextCursor
 from string import ascii_letters
 from ljn.Model import ArticleNewWord, Article
@@ -89,6 +89,9 @@ class ArticleHighlight(QSyntaxHighlighter):
 
 
 class ArticleBrowser(QTextEdit):
+
+    onArticleLoaded = pyqtSignal(int)
+
     def __init__(self, parent):
         QTextEdit.__init__(self, parent)
 
@@ -106,11 +109,13 @@ class ArticleBrowser(QTextEdit):
         self.setText(content)
         self.new_words = list(article.new_words)
         self.highlight.rehighlight()
+        self.onArticleLoaded.emit(self.article_id)
 
     def _refresh(self):
         article = Article.find_by_id(get_session(), self.article_id)
         self.new_words = list(article.new_words)
         self.highlight.rehighlight()
+        self.onArticleLoaded.emit(self.article_id)
 
     def _on_context_menu(self, point=None):
         selection = normalize(unicode(self.textCursor().selectedText()))

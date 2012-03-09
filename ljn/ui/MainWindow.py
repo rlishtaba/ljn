@@ -58,6 +58,7 @@ class MainWindow(QMainWindow):
         self.article_browser = ab = ArticleBrowser(parent)
         ab.setReadOnly(True)
         ab.addAction(create_widget_action(ab, "ESC", self._set_focus_to_list))
+        ab.onArticleLoaded.connect(self._update_word_list)
         return ab
 
     def _create_word_list(self):
@@ -137,7 +138,8 @@ class MainWindow(QMainWindow):
         self.article_browser.setFocus()
         self.article_browser.set_article(Article.find_by_id(get_session(), item.article.id))
 
-        self.word_list.update_words(item.article.id)
+    def _update_word_list(self, article_id):
+        self.word_list.update_words(article_id)
         self.word_dock_pane.setWindowTitle('Words (%d)' % len(self.word_list.new_words))
 
     def _show_category_list(self):
