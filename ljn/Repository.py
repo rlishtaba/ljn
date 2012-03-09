@@ -1,5 +1,5 @@
 #coding:utf8
-from ljn.Model import Article
+from ljn.Model import Article, ArticleNewWord, Word
 
 session_maker = None
 
@@ -19,6 +19,11 @@ def init():
         s.add(Article('this is content 1', Category.find_by_name(s, u'c1'), u'title of a1'))
         s.add(Article('this is content 2', Category.find_by_name(s, u'c1'), u'title of a2'))
         s.add(Article('this is content 3', Category.find_by_name(s, u'c2'), u'title of a3'))
+
+    article = Category.find_by_name(s, u'c1').articles[0]
+    if not len(article.new_words):
+        w = Word('is')
+        article.new_words.append(ArticleNewWord(article, w, 'is'))
 
     s.commit()
 
