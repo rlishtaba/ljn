@@ -1,6 +1,6 @@
 #coding:utf8
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QTextEdit, QColor, QSyntaxHighlighter, QTextCharFormat
+from PyQt4.QtGui import QTextEdit, QColor, QSyntaxHighlighter, QTextCharFormat, QTextCursor
 from string import ascii_letters
 from ljn.Model import ArticleNewWord, Article
 from ljn.Repository import get_session
@@ -80,6 +80,13 @@ class ArticleHighlight(QSyntaxHighlighter):
 
         return None
 
+    def get_position_of_word(self, word):
+        for start, word_len, w in self.to_word:
+            if word == w:
+                return start, word_len
+
+        return -1, -1
+
 
 class ArticleBrowser(QTextEdit):
     def __init__(self, parent):
@@ -135,4 +142,12 @@ class ArticleBrowser(QTextEdit):
         self._refresh()
 
     def navigate_word(self, word):
-        print 'navi:', word
+        start, len = self.highlight.get_position_of_word(word)
+        if start < 0:
+            return
+
+        tc = self.textCursor()
+        tc.setPosition(start)
+        tc.setPosition(start + len, QTextCursor.KeepAnchor)
+        self.setTextCursor(tc)
+        self.setFocus()
