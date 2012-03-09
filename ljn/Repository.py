@@ -3,13 +3,8 @@ from ljn.Model import Article, ArticleNewWord, Word
 
 session_maker = None
 
-def init():
-    global session_maker
-    from ljn.Model import init as model_init, BaseModel, Category
-    model_init()
-
-    from sqlalchemy.orm import sessionmaker
-    session_maker = sessionmaker(BaseModel.metadata.bind)
+def add_test_data():
+    from ljn.Model import Category
     s = session_maker()
     if not len(Category.all(s)):
         s.add(Category(u'c1'))
@@ -26,6 +21,17 @@ def init():
         article.new_words.append(ArticleNewWord(article, w, 'is'))
 
     s.commit()
+
+
+def init():
+    global session_maker
+    from ljn.Model import init as model_init, BaseModel
+    model_init()
+
+    from sqlalchemy.orm import sessionmaker
+    session_maker = sessionmaker(BaseModel.metadata.bind)
+
+    add_test_data()
 
 def get_session():
     """ @rtype: sqlalchemy.orm.session.Session """
