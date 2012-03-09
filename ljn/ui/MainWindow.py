@@ -15,13 +15,22 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(u'LJ Notes')
 
         self._create_dock_pane()
-
         self.setCentralWidget(self._create_article_browser(self))
+        self._create_actions()
+
         self.resize(800, 600)
 
+
+    def _create_actions(self):
         action = _create_widget_action(self, "ESC", self.article_browser.setFocus)
         self.article_list.addAction(action)
         self.category_list.addAction(action)
+
+        action = QAction(self)
+        action.setShortcut("CTRL+A")
+        action.setShortcutContext(Qt.ApplicationShortcut)
+        action.triggered.connect(self._toggle_dock_pane_view)
+        self.addAction(action)
 
     def _create_dock_pane(self):
         self.dock_pane = d = QDockWidget(self)
@@ -65,6 +74,12 @@ class MainWindow(QMainWindow):
             self.article_list.setFocus()
         else:
             self.category_list.setFocus()
+
+    def _toggle_dock_pane_view(self):
+        self.dock_pane.toggleViewAction().trigger()
+
+        if self.dock_pane.isVisible():
+            self._set_focus_to_list()
 
     def _get_selected_category_id(self):
         items = self.category_list.selectedItems()
