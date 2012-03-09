@@ -1,13 +1,7 @@
 #coding:utf8
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QAction, QDockWidget
-
-def _create_widget_action(parent, shortcut, func):
-    action = QAction(parent)
-    action.setShortcut(shortcut)
-    action.setShortcutContext(Qt.WidgetShortcut)
-    action.triggered.connect(func)
-    return action
+from ljn.ui.UiUtil import create_widget_action
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -18,11 +12,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self._create_article_browser(self))
         self._create_actions()
 
+        self.word_list.onWordSelected.connect(self.article_browser.navigate_word)
+
         self.resize(800, 600)
 
 
     def _create_actions(self):
-        action = _create_widget_action(self, "ESC", self.article_browser.setFocus)
+        action = create_widget_action(self, "ESC", self.article_browser.setFocus)
         self.article_list.addAction(action)
         self.category_list.addAction(action)
 
@@ -61,7 +57,7 @@ class MainWindow(QMainWindow):
         from ljn.ui.component.ArticleBrowser import ArticleBrowser
         self.article_browser = ab = ArticleBrowser(parent)
         ab.setReadOnly(True)
-        ab.addAction(_create_widget_action(ab, "ESC", self._set_focus_to_list))
+        ab.addAction(create_widget_action(ab, "ESC", self._set_focus_to_list))
         return ab
 
     def _create_word_list(self):
@@ -81,15 +77,15 @@ class MainWindow(QMainWindow):
         from ljn.ui.component.CategoryList import CategoryList
         self.category_list = cl = CategoryList(parent)
         cl.itemDoubleClicked.connect(self._open_category)
-        cl.addAction(_create_widget_action(cl, "Return", self._open_category))
+        cl.addAction(create_widget_action(cl, "Return", self._open_category))
         return cl
 
     def _create_article_list(self, parent):
         from ljn.ui.component.ArticleList import ArticleList
         self.article_list = al = ArticleList(parent)
         al.itemDoubleClicked.connect(self._open_article)
-        al.addAction(_create_widget_action(al, "Return", self._open_article))
-        al.addAction(_create_widget_action(al, "Backspace", self._show_category_list))
+        al.addAction(create_widget_action(al, "Return", self._open_article))
+        al.addAction(create_widget_action(al, "Backspace", self._show_category_list))
         return al
 
     def _set_focus_to_list(self):

@@ -133,3 +133,6 @@ class ArticleBrowser(QTextEdit):
             s.commit()
 
         self._refresh()
+
+    def navigate_word(self, word):
+        print 'navi:', word
