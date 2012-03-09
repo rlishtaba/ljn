@@ -112,8 +112,11 @@ class MainWindow(QMainWindow):
             self._show_category_list()
             return
 
+        from ljn.Model import Article
+        from ljn.Repository import get_session
+
         self.article_browser.setFocus()
-        self.article_browser.set_article(item.article)
+        self.article_browser.set_article(Article.find_by_id(get_session(), item.article.id))
 
     def _show_category_list(self):
         self.dock_pane.setWindowTitle("Category List")
