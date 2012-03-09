@@ -1,5 +1,5 @@
 #coding:utf8
-from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QHBoxLayout
+from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QHBoxLayout, QAction
 from ljn.Model import Category
 from ljn.Repository import get_session
 
@@ -25,21 +25,33 @@ class MainWindow(QMainWindow):
         return ab
 
     def _create_lists(self, parent):
-        from ljn.ui.component.CategoryList import CategoryList
-        from ljn.ui.component.ArticleList import ArticleList
-        self.category_list = cl = CategoryList(parent)
-        cl.itemDoubleClicked.connect(self._open_category)
-
-        self.article_list = al = ArticleList(parent)
-        al.itemDoubleClicked.connect(self._open_article)
-
-
         self.list_layout = layout = QStackedLayout()
-        layout.addWidget(cl)
-        layout.addWidget(al)
+        layout.addWidget(self._create_article_list(parent))
+        layout.addWidget(self._create_article_list(parent))
         return layout
 
-    def _open_category(self, item):
+    def _create_category_list(self, parent):
+        from ljn.ui.component.CategoryList import CategoryList
+        self.category_list = cl = CategoryList(parent)
+        cl.itemDoubleClicked.connect(self._open_category)
+        action = QAction(cl)
+        action.setShortcut("Return")
+        action.triggered.connect(self._open_category)
+        cl.addAction(action)
+        return cl
+
+    def _create_article_list(self, parent):
+        from ljn.ui.component.ArticleList import ArticleList
+        self.article_list = al = ArticleList(parent)
+        al.itemDoubleClicked.connect(self._open_article)
+        return al
+
+    def _open_category(self):
+        items = self.category_list.selectedItems()
+        if not items:
+            return
+
+        item = items[0]
         from ljn.ui.component.CategoryList import CategoryItem
         if not isinstance(item, CategoryItem):
             return
