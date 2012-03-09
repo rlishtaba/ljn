@@ -91,6 +91,7 @@ class MainWindow(QMainWindow):
             self._show_category_list()
             return
 
+        self.article_browser.setFocus()
         self.article_browser.set_article(item.article)
 
     def _show_category_list(self):
