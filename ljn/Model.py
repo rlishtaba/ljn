@@ -91,11 +91,17 @@ class Word(BaseModel):
     def __init__(self, word):
         self.word = word
 
+    @staticmethod
+    def find(session, word):
+        """ @rtype: Word """
+        return session.query(Word).filter(Word.word == word).first()
+
+
 class ArticleNewWord(BaseModel):
     __tablename__ = 'articlenewwords'
 
     article_id = Column(Integer, ForeignKey('articles.id'), primary_key=True)
-    word_id = Column(Integer, ForeignKey('words.id'), primary_key=True)
+    word_id = Column(Integer, ForeignKey('words.id'))
     word_content = Column(String, primary_key=True)
     create_date = Column(DateTime, default=datetime.now)
 
@@ -104,14 +110,20 @@ class ArticleNewWord(BaseModel):
             self.article = article
         elif isinstance(article, int):
             self.article_id = article
-        else:
+        elif article is not None:
             raise Exception('Invalid article type: %s' % type(article))
 
         if isinstance(word, Word):
             self.word = word
         elif isinstance(word, int):
             self.word_id = word
-        else:
+        elif word is not None:
             raise Exception('Invalid word type: %s' % type(word))
 
         self.word_content = word_content
+
+    @staticmethod
+    def find_by_article_word(session, article_id, word_content):
+        """ @rtype: ArticleNewWord """
+        query = session.query(ArticleNewWord).filter(ArticleNewWord.article_id == article_id)
+        return query.filter(ArticleNewWord.word_content == word_content).first()
