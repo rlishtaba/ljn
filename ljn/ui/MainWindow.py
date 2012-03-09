@@ -14,7 +14,7 @@ class MainWindow(QMainWindow):
         QMainWindow.__init__(self)
         self.setWindowTitle(u'LJ Notes')
 
-        self._create_dock_pane()
+        self._create_dock_panes()
         self.setCentralWidget(self._create_article_browser(self))
         self._create_actions()
 
@@ -32,12 +32,23 @@ class MainWindow(QMainWindow):
         action.triggered.connect(self._toggle_dock_pane_view)
         self.addAction(action)
 
-    def _create_dock_pane(self):
+    def _create_dock_panes(self):
+        self._create_list_dock_pane()
+        self._create_word_dock_pane()
+
+    def _create_list_dock_pane(self):
         self.list_dock_pane = d = QDockWidget(self)
         d.setFeatures(QDockWidget.NoDockWidgetFeatures)
         d.setAllowedAreas(Qt.LeftDockWidgetArea)
         d.setWidget(self._create_lists())
         self.addDockWidget(Qt.LeftDockWidgetArea, d)
+
+    def _create_word_dock_pane(self):
+        self.word_dock_pane = d = QDockWidget(self)
+        d.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        d.setAllowedAreas(Qt.RightDockWidgetArea)
+        d.setWidget(self._create_word_list())
+        self.addDockWidget(Qt.RightDockWidgetArea, d)
 
     def _create_article_browser(self, parent):
         from ljn.ui.component.ArticleBrowser import ArticleBrowser
@@ -45,6 +56,11 @@ class MainWindow(QMainWindow):
         ab.setReadOnly(True)
         ab.addAction(_create_widget_action(ab, "ESC", self._set_focus_to_list))
         return ab
+
+    def _create_word_list(self):
+        from ljn.ui.component.WordList import WordList
+        self.word_list = WordList(self)
+        return self.word_list
 
     def _create_lists(self):
         w = QWidget(self)
@@ -117,6 +133,9 @@ class MainWindow(QMainWindow):
 
         self.article_browser.setFocus()
         self.article_browser.set_article(Article.find_by_id(get_session(), item.article.id))
+
+        self.word_list.update_words(item.article.id)
+        self.word_dock_pane.setWindowTitle('Words (%d)' % len(self.word_list.new_words))
 
     def _show_category_list(self):
         self.list_dock_pane.setWindowTitle("Category List")
