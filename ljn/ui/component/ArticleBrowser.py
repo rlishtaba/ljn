@@ -2,6 +2,8 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QTextEdit, QColor, QSyntaxHighlighter, QTextCharFormat
 from string import ascii_letters
+from ljn.Model import ArticleNewWord, Article
+from ljn.Repository import get_session
 
 STYLE_SHEET = r'''
 QTextEdit {
@@ -27,10 +29,30 @@ def whole_word(text, start, word_length):
         return False
     return True
 
+def normalize(word):
+    while word and not word[0].isalpha():
+        word = word[1:]
+
+    while word and not word[-1].isalpha():
+        word = word[:-1]
+
+    return word
+
 
 class ArticleHighlight(QSyntaxHighlighter):
+    def __init__(self, parent):
+        QSyntaxHighlighter.__init__(self, parent)
+        self.to_word = []
+
+    def rehighlight(self):
+        self.to_word = []
+        QSyntaxHighlighter.rehighlight(self)
+
     def highlightBlock(self, content):
-        content = str(content)
+        block_pos = self.currentBlock().position()
+        content = unicode(content)
+
+        to_word = self.to_word
 
         f = QTextCharFormat()
         f.setBackground(HIGHLIGHT_COLOR)
@@ -46,6 +68,16 @@ class ArticleHighlight(QSyntaxHighlighter):
 
                 if whole_word(content, start, word_len):
                     self.setFormat(start, word_len, f)
+                    to_word.append((block_pos + start, word_len, content[start:start+word_len]))
+
+        to_word.sort()
+
+    def get_word_of_position(self, pos):
+        for start, word_len, word in self.to_word:
+            if start <= pos < start + word_len:
+                return word
+
+        return None
 
 
 class ArticleBrowser(QTextEdit):
@@ -56,26 +88,43 @@ class ArticleBrowser(QTextEdit):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._on_context_menu)
 
+        self.article_id = None
         self.new_words = []
         self.highlight = ArticleHighlight(self)
 
     def set_article(self, article):
+        self.article_id = article.id
         content = article.content
         self.setText(content)
         self.new_words = list(article.new_words)
         self.highlight.rehighlight()
 
+    def _refresh(self):
+        article = Article.find_by_id(get_session(), self.article_id)
+        self.new_words = list(article.new_words)
+        self.highlight.rehighlight()
+
     def _on_context_menu(self, point=None):
-        print '_on_context_menu:', point
+        selection = normalize(unicode(self.textCursor().selectedText()))
+        word = self.highlight.get_word_of_position(self.cursorForPosition(point).position())
+        if word is None:
+            if not self.textCursor().hasSelection():
+                return
 
-    def mouseReleaseEvent(self, QMouseEvent):
-        QTextEdit.mouseReleaseEvent(self, QMouseEvent)
+            # highlight selected word
+            from NewWordEditor import create_new_word
+            nw = create_new_word(self, selection)
+            if nw is None:
+                return
 
-        selection = unicode(self.textCursor().selectedText()).strip()
-        if not selection:
-            return
+            nw.article_id = self.article_id
+            s = get_session()
+            s.add(nw)
+            s.commit()
 
-        self._on_selection_changed(selection)
+        else:
+            s = get_session()
+            s.delete(ArticleNewWord.find_by_article_word(s, self.article_id, word))
+            s.commit()
 
-    def _on_selection_changed(self, selection):
-        pass
+        self._refresh()
