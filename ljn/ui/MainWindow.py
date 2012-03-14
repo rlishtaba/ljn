@@ -14,10 +14,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle(u'LJ Notes')
 
-        self._create_dock_panes()
         self.setCentralWidget(self._create_article_browser(self))
-
-        self.word_list.onWordSelected.connect(self.article_browser.navigate_word)
 
         self.resize(800, 600)
 
@@ -25,16 +22,6 @@ class MainWindow(QMainWindow):
         MainWindow.onWindowInit.emit(self)
         self._create_actions()
 
-
-    def _create_dock_panes(self):
-        self._create_list_dock_pane()
-        self._create_word_dock_pane()
-
-    def _create_list_dock_pane(self):
-        self.list_dock_pane = d = QDockWidget(self)
-        d.setFeatures(QDockWidget.NoDockWidgetFeatures)
-        d.setAllowedAreas(Qt.LeftDockWidgetArea)
-        self.addDockWidget(Qt.LeftDockWidgetArea, d)
 
     def _create_actions(self):
         action = create_widget_action(self, "ESC", self.article_browser.setFocus)
@@ -53,13 +40,6 @@ class MainWindow(QMainWindow):
         action.triggered.connect(lambda : self.word_dock_pane.toggleViewAction().trigger())
         self.addAction(action)
 
-    def _create_word_dock_pane(self):
-        self.word_dock_pane = d = QDockWidget(self)
-        d.setFeatures(QDockWidget.NoDockWidgetFeatures)
-        d.setAllowedAreas(Qt.RightDockWidgetArea)
-        d.setWidget(self._create_word_list())
-        self.addDockWidget(Qt.RightDockWidgetArea, d)
-
     def _create_article_browser(self, parent):
         from ljn.ui.component.ArticleBrowser import ArticleBrowser
         self.article_browser = ab = ArticleBrowser(parent)
@@ -67,11 +47,6 @@ class MainWindow(QMainWindow):
         ab.addAction(create_widget_action(ab, "ESC", self._set_focus_to_list))
         ab.onArticleLoaded.connect(self._update_word_list)
         return ab
-
-    def _create_word_list(self):
-        from ljn.ui.component.WordList import WordList
-        self.word_list = WordList(self)
-        return self.word_list
 
     def _set_focus_to_list(self):
         if self.article_list.isVisible():
@@ -96,11 +71,16 @@ class ListDirector(object):
         MainWindow.onWindowInit.connect(self.window_init)
 
     def window_create(self, window):
+        window.list_dock_pane = d = QDockWidget(window)
+        d.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        d.setAllowedAreas(Qt.LeftDockWidgetArea)
+        window.addDockWidget(Qt.LeftDockWidgetArea, d)
+
         w = QWidget(window)
         window.list_layout = layout = QStackedLayout(w)
         layout.addWidget(self._create_category_list(window, w))
         layout.addWidget(self._create_article_list(window, w))
-        window.list_dock_pane.setWidget(w)
+        d.setWidget(w)
 
     def _create_category_list(self, window, parent):
         from ljn.ui.component.CategoryList import CategoryList
@@ -169,10 +149,31 @@ class ListDirector(object):
         window.list_dock_pane.setWindowTitle("Category List")
         window.list_layout.setCurrentWidget(window.category_list)
 
-
     def window_init(self, window):
         pass
+
+
+class WordDirector(object):
+    def __init__(self):
+        MainWindow.onWindowCreate.connect(self.window_create)
+        MainWindow.onWindowInit.connect(self.window_init)
+
+    def window_create(self, window):
+        window.word_dock_pane = d = QDockWidget(window)
+        d.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        d.setAllowedAreas(Qt.RightDockWidgetArea)
+        d.setWidget(self._create_word_list(window))
+        window.addDockWidget(Qt.RightDockWidgetArea, d)
+
+    def _create_word_list(self, window):
+        from ljn.ui.component.WordList import WordList
+        window.word_list = WordList(window)
+        return window.word_list
+
+    def window_init(self, window):
+        window.word_list.onWordSelected.connect(window.article_browser.navigate_word)
 
 class MainWindowDirector(object):
     def __init__(self):
         self._list_director = ListDirector()
+        self._word_director = WordDirector()
