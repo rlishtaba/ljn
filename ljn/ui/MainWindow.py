@@ -20,45 +20,15 @@ class MainWindow(QMainWindow):
 
         MainWindow.onWindowCreate.emit(self)
         MainWindow.onWindowInit.emit(self)
-        self._create_actions()
-
-
-    def _create_actions(self):
-        action = create_widget_action(self, "ESC", self.article_browser.setFocus)
-        self.article_list.addAction(action)
-        self.category_list.addAction(action)
-
-        action = QAction(self)
-        action.setShortcut("CTRL+A")
-        action.setShortcutContext(Qt.ApplicationShortcut)
-        action.triggered.connect(self._toggle_dock_pane_view)
-        self.addAction(action)
-
-        action = QAction(self)
-        action.setShortcut("CTRL+W")
-        action.setShortcutContext(Qt.ApplicationShortcut)
-        action.triggered.connect(lambda : self.word_dock_pane.toggleViewAction().trigger())
-        self.addAction(action)
+        ab = self.article_browser
+        ab.addAction(create_widget_action(ab, "ESC", partial(self.list_director._set_focus_to_list, self)))
 
     def _create_article_browser(self, parent):
         from ljn.ui.component.ArticleBrowser import ArticleBrowser
         self.article_browser = ab = ArticleBrowser(parent)
         ab.setReadOnly(True)
-        ab.addAction(create_widget_action(ab, "ESC", self._set_focus_to_list))
         ab.onArticleLoaded.connect(self._update_word_list)
         return ab
-
-    def _set_focus_to_list(self):
-        if self.article_list.isVisible():
-            self.article_list.setFocus()
-        else:
-            self.category_list.setFocus()
-
-    def _toggle_dock_pane_view(self):
-        self.list_dock_pane.toggleViewAction().trigger()
-
-        if self.list_dock_pane.isVisible():
-            self._set_focus_to_list()
 
     def _update_word_list(self, article_id):
         self.word_list.update_words(article_id)
@@ -71,6 +41,8 @@ class ListDirector(object):
         MainWindow.onWindowInit.connect(self.window_init)
 
     def window_create(self, window):
+        window.list_director = self
+
         window.list_dock_pane = d = QDockWidget(window)
         d.setFeatures(QDockWidget.NoDockWidgetFeatures)
         d.setAllowedAreas(Qt.LeftDockWidgetArea)
@@ -150,7 +122,27 @@ class ListDirector(object):
         window.list_layout.setCurrentWidget(window.category_list)
 
     def window_init(self, window):
-        pass
+        action = create_widget_action(window, "ESC", window.article_browser.setFocus)
+        window.article_list.addAction(action)
+        window.category_list.addAction(action)
+
+        action = QAction(window)
+        action.setShortcut("CTRL+A")
+        action.setShortcutContext(Qt.ApplicationShortcut)
+        action.triggered.connect(partial(self._toggle_dock_pane_view, window))
+        window.addAction(action)
+
+    def _set_focus_to_list(self, window):
+        if window.article_list.isVisible():
+            window.article_list.setFocus()
+        else:
+            window.category_list.setFocus()
+
+    def _toggle_dock_pane_view(self, window):
+        window.list_dock_pane.toggleViewAction().trigger()
+
+        if window.list_dock_pane.isVisible():
+            self._set_focus_to_list(window)
 
 
 class WordDirector(object):
@@ -172,6 +164,13 @@ class WordDirector(object):
 
     def window_init(self, window):
         window.word_list.onWordSelected.connect(window.article_browser.navigate_word)
+
+        action = QAction(window)
+        action.setShortcut("CTRL+W")
+        action.setShortcutContext(Qt.ApplicationShortcut)
+        action.triggered.connect(lambda : window.word_dock_pane.toggleViewAction().trigger())
+        window.addAction(action)
+
 
 class MainWindowDirector(object):
     def __init__(self):
