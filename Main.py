@@ -1,7 +1,10 @@
 #coding:utf8
 from PyQt4.QtGui import QApplication
+import logging
 
 def init():
+    logging.basicConfig()
+
     from ljn.Repository import init as repo_init
     repo_init()
 
