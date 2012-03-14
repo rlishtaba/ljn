@@ -13,27 +13,10 @@ class MainWindow(QMainWindow):
         QMainWindow.__init__(self)
 
         self.setWindowTitle(u'LJ Notes')
-
-        self.setCentralWidget(self._create_article_browser(self))
-
         self.resize(800, 600)
 
         MainWindow.onWindowCreate.emit(self)
         MainWindow.onWindowInit.emit(self)
-        ab = self.article_browser
-        ab.addAction(create_widget_action(ab, "ESC", partial(self.list_director._set_focus_to_list, self)))
-
-    def _create_article_browser(self, parent):
-        from ljn.ui.component.ArticleBrowser import ArticleBrowser
-        self.article_browser = ab = ArticleBrowser(parent)
-        ab.setReadOnly(True)
-        ab.onArticleLoaded.connect(self._update_word_list)
-        return ab
-
-    def _update_word_list(self, article_id):
-        self.word_list.update_words(article_id)
-        self.word_dock_pane.setWindowTitle('Words (%d)' % len(self.word_list.new_words))
-
 
 class ListDirector(object):
     def __init__(self):
@@ -41,6 +24,7 @@ class ListDirector(object):
         MainWindow.onWindowInit.connect(self.window_init)
 
     def window_create(self, window):
+        """ @type window: MainWindow """
         window.list_director = self
 
         window.list_dock_pane = d = QDockWidget(window)
@@ -151,6 +135,8 @@ class WordDirector(object):
         MainWindow.onWindowInit.connect(self.window_init)
 
     def window_create(self, window):
+        """ @type window: MainWindow """
+        window.word_director = self
         window.word_dock_pane = d = QDockWidget(window)
         d.setFeatures(QDockWidget.NoDockWidgetFeatures)
         d.setAllowedAreas(Qt.RightDockWidgetArea)
@@ -162,6 +148,10 @@ class WordDirector(object):
         window.word_list = WordList(window)
         return window.word_list
 
+    def _update_word_list(self, window, article_id):
+        window.word_list.update_words(article_id)
+        window.word_dock_pane.setWindowTitle('Words (%d)' % len(window.word_list.new_words))
+
     def window_init(self, window):
         window.word_list.onWordSelected.connect(window.article_browser.navigate_word)
 
@@ -172,7 +162,28 @@ class WordDirector(object):
         window.addAction(action)
 
 
+class ArticleBrowserDirector(object):
+    def __init__(self):
+        MainWindow.onWindowCreate.connect(self.window_create)
+        MainWindow.onWindowInit.connect(self.window_init)
+
+    def window_create(self, window):
+        """ @type window: MainWindow """
+        window.article_browser_director = self
+
+        from ljn.ui.component.ArticleBrowser import ArticleBrowser
+        window.article_browser = ab = ArticleBrowser(window)
+        ab.setReadOnly(True)
+        window.setCentralWidget(ab)
+
+    def window_init(self, window):
+        ab = window.article_browser
+        ab.onArticleLoaded.connect(partial(window.word_director._update_word_list, window))
+        ab.addAction(create_widget_action(ab, "ESC", partial(window.list_director._set_focus_to_list, window)))
+
+
 class MainWindowDirector(object):
     def __init__(self):
         self._list_director = ListDirector()
         self._word_director = WordDirector()
+        self._article_browser_director = ArticleBrowserDirector()
