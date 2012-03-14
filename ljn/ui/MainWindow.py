@@ -91,11 +91,7 @@ class ListDirector(object):
             self._show_category_list(window)
             return
 
-        from ljn.Model import Article
-        from ljn.Repository import get_session
-
-        window.article_browser.setFocus()
-        window.article_browser.set_article(Article.find_by_id(get_session(), item.article.id))
+        window.article_browser_director.open_article(window, item.article.id)
 
     def _show_category_list(self, window):
         window.list_dock_pane.setWindowTitle("Category List")
@@ -191,6 +187,13 @@ class ArticleBrowserDirector(object):
 
         if hasattr(window, 'list_director'):
             ab.addAction(create_widget_action(ab, "ESC", partial(window.list_director._set_focus_to_list, window)))
+
+    def open_article(self, window, article_id):
+        from ljn.Model import Article
+        from ljn.Repository import get_session
+
+        window.article_browser.setFocus()
+        window.article_browser.set_article(Article.find_by_id(get_session(), article_id))
 
 
 class MainWindowDirector(object):
