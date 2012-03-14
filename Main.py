@@ -10,7 +10,8 @@ def main():
     init()
 
     app = QApplication([])
-    from ljn.ui.MainWindow import MainWindow
+    from ljn.ui.MainWindow import MainWindow, MainWindowDirector
+    mwd = MainWindowDirector()
     mw = MainWindow()
     mw.show()
     app.exec_()

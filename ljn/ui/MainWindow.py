@@ -1,21 +1,40 @@
 #coding:utf8
+from functools import partial
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QAction, QDockWidget
+from ljn.Event import EventPublisher
 from ljn.ui.UiUtil import create_widget_action
 
 class MainWindow(QMainWindow):
+    onWindowCreate = EventPublisher(QMainWindow)
+    onWindowInit = EventPublisher(QMainWindow)
+
     def __init__(self):
         QMainWindow.__init__(self)
+
         self.setWindowTitle(u'LJ Notes')
 
         self._create_dock_panes()
         self.setCentralWidget(self._create_article_browser(self))
-        self._create_actions()
 
         self.word_list.onWordSelected.connect(self.article_browser.navigate_word)
 
         self.resize(800, 600)
 
+        MainWindow.onWindowCreate.emit(self)
+        MainWindow.onWindowInit.emit(self)
+        self._create_actions()
+
+
+    def _create_dock_panes(self):
+        self._create_list_dock_pane()
+        self._create_word_dock_pane()
+
+    def _create_list_dock_pane(self):
+        self.list_dock_pane = d = QDockWidget(self)
+        d.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        d.setAllowedAreas(Qt.LeftDockWidgetArea)
+        self.addDockWidget(Qt.LeftDockWidgetArea, d)
 
     def _create_actions(self):
         action = create_widget_action(self, "ESC", self.article_browser.setFocus)
@@ -33,18 +52,6 @@ class MainWindow(QMainWindow):
         action.setShortcutContext(Qt.ApplicationShortcut)
         action.triggered.connect(lambda : self.word_dock_pane.toggleViewAction().trigger())
         self.addAction(action)
-
-
-    def _create_dock_panes(self):
-        self._create_list_dock_pane()
-        self._create_word_dock_pane()
-
-    def _create_list_dock_pane(self):
-        self.list_dock_pane = d = QDockWidget(self)
-        d.setFeatures(QDockWidget.NoDockWidgetFeatures)
-        d.setAllowedAreas(Qt.LeftDockWidgetArea)
-        d.setWidget(self._create_lists())
-        self.addDockWidget(Qt.LeftDockWidgetArea, d)
 
     def _create_word_dock_pane(self):
         self.word_dock_pane = d = QDockWidget(self)
@@ -66,29 +73,6 @@ class MainWindow(QMainWindow):
         self.word_list = WordList(self)
         return self.word_list
 
-    def _create_lists(self):
-        w = QWidget(self)
-        self.list_layout = layout = QStackedLayout(w)
-        layout.addWidget(self._create_category_list(w))
-        layout.addWidget(self._create_article_list(w))
-        self._show_category_list()
-        return w
-
-    def _create_category_list(self, parent):
-        from ljn.ui.component.CategoryList import CategoryList
-        self.category_list = cl = CategoryList(parent)
-        cl.itemDoubleClicked.connect(self._open_category)
-        cl.addAction(create_widget_action(cl, "Return", self._open_category))
-        return cl
-
-    def _create_article_list(self, parent):
-        from ljn.ui.component.ArticleList import ArticleList
-        self.article_list = al = ArticleList(parent)
-        al.itemDoubleClicked.connect(self._open_article)
-        al.addAction(create_widget_action(al, "Return", self._open_article))
-        al.addAction(create_widget_action(al, "Backspace", self._show_category_list))
-        return al
-
     def _set_focus_to_list(self):
         if self.article_list.isVisible():
             self.article_list.setFocus()
@@ -101,8 +85,48 @@ class MainWindow(QMainWindow):
         if self.list_dock_pane.isVisible():
             self._set_focus_to_list()
 
-    def _get_selected_category_id(self):
-        items = self.category_list.selectedItems()
+    def _update_word_list(self, article_id):
+        self.word_list.update_words(article_id)
+        self.word_dock_pane.setWindowTitle('Words (%d)' % len(self.word_list.new_words))
+
+
+class ListDirector(object):
+    def __init__(self):
+        MainWindow.onWindowCreate.connect(self.window_create)
+        MainWindow.onWindowInit.connect(self.window_init)
+
+    def window_create(self, window):
+        w = QWidget(window)
+        window.list_layout = layout = QStackedLayout(w)
+        layout.addWidget(self._create_category_list(window, w))
+        layout.addWidget(self._create_article_list(window, w))
+        window.list_dock_pane.setWidget(w)
+
+    def _create_category_list(self, window, parent):
+        from ljn.ui.component.CategoryList import CategoryList
+        window.category_list = cl = CategoryList(parent)
+        cl.itemDoubleClicked.connect(partial(self._open_category, window))
+        cl.addAction(create_widget_action(cl, "Return", partial(self._open_category)))
+        return cl
+
+    def _create_article_list(self, window, parent):
+        from ljn.ui.component.ArticleList import ArticleList
+        window.article_list = al = ArticleList(parent)
+        al.itemDoubleClicked.connect(partial(self._open_article, window))
+        al.addAction(create_widget_action(al, "Return", partial(self._open_article, window)))
+        al.addAction(create_widget_action(al, "Backspace", partial(self._show_category_list, window)))
+        return al
+
+    def _open_category(self, window):
+        id = self._get_selected_category_id(window)
+        if id is None:
+            return
+
+        window.article_list.update_articles(id)
+        self._show_article_list(window)
+
+    def _get_selected_category_id(self, window):
+        items = window.category_list.selectedItems()
         if not items:
             return None
 
@@ -113,46 +137,42 @@ class MainWindow(QMainWindow):
 
         return item.category.id
 
-    def _open_category(self):
-        id = self._get_selected_category_id()
-        if id is None:
-            return
+    def _show_article_list(self, window):
+        from ljn.Model import Category
+        from ljn.Repository import get_session
+        id = self._get_selected_category_id(window)
+        if id is not None:
+            msg = ' (%s)' % Category.find_by_id(get_session(), id).name
+        else:
+            msg = ''
+        window.list_dock_pane.setWindowTitle("Article List" + msg)
+        window.list_layout.setCurrentWidget(window.article_list)
 
-        self.article_list.update_articles(id)
-        self._show_article_list()
-
-    def _open_article(self):
-        items = self.article_list.selectedItems()
+    def _open_article(self, window):
+        items = window.article_list.selectedItems()
         if not items:
             return
 
         item = items[0]
         from ljn.ui.component.ArticleList import ArticleItem
         if not isinstance(item, ArticleItem):
-            self._show_category_list()
+            self._show_category_list(window)
             return
 
         from ljn.Model import Article
         from ljn.Repository import get_session
 
-        self.article_browser.setFocus()
-        self.article_browser.set_article(Article.find_by_id(get_session(), item.article.id))
+        window.article_browser.setFocus()
+        window.article_browser.set_article(Article.find_by_id(get_session(), item.article.id))
 
-    def _update_word_list(self, article_id):
-        self.word_list.update_words(article_id)
-        self.word_dock_pane.setWindowTitle('Words (%d)' % len(self.word_list.new_words))
+    def _show_category_list(self, window):
+        window.list_dock_pane.setWindowTitle("Category List")
+        window.list_layout.setCurrentWidget(window.category_list)
 
-    def _show_category_list(self):
-        self.list_dock_pane.setWindowTitle("Category List")
-        self.list_layout.setCurrentWidget(self.category_list)
 
-    def _show_article_list(self):
-        from ljn.Model import Category
-        from ljn.Repository import get_session
-        id = self._get_selected_category_id()
-        if id is not None:
-            msg = ' (%s)' % Category.find_by_id(get_session(), id).name
-        else:
-            msg = ''
-        self.list_dock_pane.setWindowTitle("Article List" + msg)
-        self.list_layout.setCurrentWidget(self.article_list)
+    def window_init(self, window):
+        pass
+
+class MainWindowDirector(object):
+    def __init__(self):
+        self._list_director = ListDirector()
