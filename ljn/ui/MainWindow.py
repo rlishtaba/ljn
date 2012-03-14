@@ -41,16 +41,12 @@ class ListDirector(object):
     def _create_category_list(self, window, parent):
         from ljn.ui.component.CategoryList import CategoryList
         window.category_list = cl = CategoryList(parent)
-        cl.itemDoubleClicked.connect(partial(self._open_category, window))
-        cl.addAction(create_widget_action(cl, "Return", partial(self._open_category)))
         return cl
 
     def _create_article_list(self, window, parent):
         from ljn.ui.component.ArticleList import ArticleList
         window.article_list = al = ArticleList(parent)
-        al.itemDoubleClicked.connect(partial(self._open_article, window))
-        al.addAction(create_widget_action(al, "Return", partial(self._open_article, window)))
-        al.addAction(create_widget_action(al, "Backspace", partial(self._show_category_list, window)))
+        self._show_category_list(window)
         return al
 
     def _open_category(self, window):
@@ -106,9 +102,20 @@ class ListDirector(object):
         window.list_layout.setCurrentWidget(window.category_list)
 
     def window_init(self, window):
-        action = create_widget_action(window, "ESC", window.article_browser.setFocus)
-        window.article_list.addAction(action)
-        window.category_list.addAction(action)
+        cl = window.category_list
+        cl.itemDoubleClicked.connect(partial(self._open_category, window))
+        cl.addAction(create_widget_action(cl, "Return", partial(self._open_category, window)))
+
+        al = window.article_list
+        al.addAction(create_widget_action(al, "Backspace", partial(self._show_category_list, window)))
+
+        if hasattr(window, 'article_browser_director'):
+            action = create_widget_action(window, "ESC", window.article_browser.setFocus)
+            window.article_list.addAction(action)
+            window.category_list.addAction(action)
+
+            al.itemDoubleClicked.connect(partial(self._open_article, window))
+            al.addAction(create_widget_action(al, "Return", partial(self._open_article, window)))
 
         action = QAction(window)
         action.setShortcut("CTRL+A")
@@ -153,7 +160,8 @@ class WordDirector(object):
         window.word_dock_pane.setWindowTitle('Words (%d)' % len(window.word_list.new_words))
 
     def window_init(self, window):
-        window.word_list.onWordSelected.connect(window.article_browser.navigate_word)
+        if hasattr(window, 'article_browser_director'):
+            window.word_list.onWordSelected.connect(window.article_browser.navigate_word)
 
         action = QAction(window)
         action.setShortcut("CTRL+W")
@@ -178,8 +186,11 @@ class ArticleBrowserDirector(object):
 
     def window_init(self, window):
         ab = window.article_browser
-        ab.onArticleLoaded.connect(partial(window.word_director._update_word_list, window))
-        ab.addAction(create_widget_action(ab, "ESC", partial(window.list_director._set_focus_to_list, window)))
+        if hasattr(window, 'word_director'):
+            ab.onArticleLoaded.connect(partial(window.word_director._update_word_list, window))
+
+        if hasattr(window, 'list_director'):
+            ab.addAction(create_widget_action(ab, "ESC", partial(window.list_director._set_focus_to_list, window)))
 
 
 class MainWindowDirector(object):
