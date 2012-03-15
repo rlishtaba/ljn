@@ -39,6 +39,7 @@ class WordList(QListWidget):
         self.new_words = ArticleNewWord.all_article_new_word(s, article_id)
         for nw in self.new_words:
             self.addItem(WordItem(nw))
+        self.sortItems()
 
     def _select_item(self):
         items = self.selectedItems()
