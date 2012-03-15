@@ -31,7 +31,7 @@ def init():
     from sqlalchemy.orm import sessionmaker
     session_maker = sessionmaker(BaseModel.metadata.bind)
 
-    add_test_data()
+#    add_test_data()
 
 def get_session():
     """ @rtype: sqlalchemy.orm.session.Session """
