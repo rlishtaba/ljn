@@ -170,6 +170,8 @@ class WordDirector(object):
         action.triggered.connect(lambda : window.word_dock_pane.toggleViewAction().trigger())
         window.addAction(action)
 
+        window.word_dock_pane.setWindowTitle('Words')
+
 
 class ArticleBrowserDirector(object):
     def __init__(self):
