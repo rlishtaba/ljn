@@ -1,9 +1,29 @@
 #coding:utf8
+from os.path import exists, join
 from PyQt4.QtGui import QApplication
 import logging
+import g
+
+MB = 1024 * 1024
+
+def init_log():
+    from logging.handlers import RotatingFileHandler
+    dir = join(g.ROOT, 'log')
+    if not exists(dir):
+        import os
+        os.makedirs(dir)
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    handler = RotatingFileHandler(join(dir, 'ljn.log'), maxBytes=10 * MB, backupCount=10)
+    handler.setFormatter(logging.Formatter("[%(asctime)s] %(process)d - %(name)s %(levelname)-5s - %(message)s"))
+    logger.addHandler(handler)
+    logger.info('')
+    logger.info('System start')
+
 
 def init():
-    logging.basicConfig()
+    init_log()
 
     from Backup import update_data
     update_data()

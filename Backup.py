@@ -2,6 +2,9 @@
 from os.path import join, exists
 import g
 import json
+import logging
+
+log = logging.getLogger(__name__)
 
 """
 
@@ -92,6 +95,7 @@ def backup_data(r=None):
     if r is None:
         r = create_conn()
         if r is None:
+            log.error('connect to redis server error!')
             return None
 
     cfg = read_cfg(CFG_FILE)
@@ -101,6 +105,7 @@ def backup_data(r=None):
     id = r.incr(PREFIX + 'backup_id')
     r.rpush(PREFIX + 'backups', '%s|%s|%s|%s|%s|%s' % (id, get_date_str(), md5, osize, csize, cfg['host_name']))
     r.set(PREFIX + 'backup:%s:content' % id, cdata)
+    log.info('backup data to server done')
     return id
 
 def update_data(r=None):
@@ -118,10 +123,11 @@ def update_data(r=None):
 
     id, date, md5, osize, csize, host = info[0].split('|', 5)
     if get_data_file_md5() == md5:
+        log.info('data file is up to date')
         return
 
     restore_data(r.get(PREFIX + 'backup:%s:content' % id))
-
+    log.info('restore data from server done')
 
 def main():
     if not exists(CFG_FILE):
