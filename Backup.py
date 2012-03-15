@@ -65,7 +65,7 @@ def restore_data(content):
 
     if exists(DATA_FILE):
         import shutil
-        shutil.move(DATA_FILE, DATA_FILE + '.' + get_date_str())
+        shutil.move(DATA_FILE, DATA_FILE + '.' + get_date_str().replace(':', ''))
 
     from bz2 import decompress
     data = decompress(content)
