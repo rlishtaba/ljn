@@ -119,6 +119,11 @@ class ListDirector(object):
         action.triggered.connect(partial(self._toggle_dock_pane_view, window))
         window.addAction(action)
 
+        cl.setFocus()
+        if cl.count() > 0:
+            cl.setCurrentRow(0)
+
+
     def _set_focus_to_list(self, window):
         if window.article_list.isVisible():
             window.article_list.setFocus()
