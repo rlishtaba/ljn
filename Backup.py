@@ -34,6 +34,14 @@ def read_cfg(file_name):
 
     return None
 
+
+def get_data_file_md5():
+    from hashlib import md5
+    if not exists(DATA_FILE):
+        return ''
+    return md5(file(DATA_FILE, 'rb').read()).hexdigest()
+
+
 def get_data_file():
     from bz2 import compress
     from hashlib import md5
@@ -78,6 +86,9 @@ def create_conn():
     return redis.Redis(up.hostname, up.port, password=up.password)
 
 def backup_data(r=None):
+    if not exists(DATA_FILE):
+        return None
+
     if r is None:
         r = create_conn()
         if r is None:
@@ -91,6 +102,25 @@ def backup_data(r=None):
     r.rpush(PREFIX + 'backups', '%s|%s|%s|%s|%s|%s' % (id, get_date_str(), md5, osize, csize, cfg['host_name']))
     r.set(PREFIX + 'backup:%s:content' % id, cdata)
     return id
+
+def update_data(r=None):
+    """ @type r: Redis """
+    if r is None:
+        r = create_conn()
+        if r is None:
+            return None
+
+    cfg = read_cfg(CFG_FILE)
+    PREFIX = 'ljn:%s:' % cfg['user_name']
+    info = r.lrange(PREFIX + 'backups', -1, -1)
+    if not info:
+        return
+
+    id, date, md5, osize, csize, host = info[0].split('|', 5)
+    if get_data_file_md5() == md5:
+        return
+
+    restore_data(r.get(PREFIX + 'backup:%s:content' % id))
 
 
 def main():
