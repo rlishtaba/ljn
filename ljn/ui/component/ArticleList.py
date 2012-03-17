@@ -1,7 +1,8 @@
 #coding:utf8
-from PyQt4.QtGui import QListWidget, QListWidgetItem, QAction, QInputDialog, QMessageBox
+from PyQt4.QtGui import QListWidget, QListWidgetItem, QInputDialog, QMessageBox
 from ljn.Model import Article, Category
 from ljn.Repository import get_session
+from ljn.ui.UiUtil import create_widget_action
 from ljn.ui.component import ArticleEditor
 
 class ArticleItem(QListWidgetItem):
@@ -17,27 +18,9 @@ class ArticleList(QListWidget):
 
         self.category_id = None
         self.update_articles()
-        self.addAction(self._create_rename_action())
-        self.addAction(self._create_delete_action())
-        self.addAction(self._create_new_action())
-
-    def _create_new_action(self):
-        n = QAction("New", self)
-        n.setShortcut("CTRL+N")
-        n.triggered.connect(self._new_article)
-        return n
-
-    def _create_rename_action(self):
-        a = QAction("Rename", self)
-        a.setShortcut("F2")
-        a.triggered.connect(self._rename_article)
-        return a
-
-    def _create_delete_action(self):
-        a = QAction("Delete", self)
-        a.setShortcut("Del")
-        a.triggered.connect(self._del_article)
-        return a
+        self.addAction(create_widget_action(self, "F2", self._rename_article))
+        self.addAction(create_widget_action(self, "Del", self._del_article))
+        self.addAction(create_widget_action(self, "CTRL+N", self._new_article))
 
     def update_articles(self, category_id=None):
         self.clear()

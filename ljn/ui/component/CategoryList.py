@@ -1,7 +1,8 @@
 #coding:utf8
-from PyQt4.QtGui import QListWidget, QListWidgetItem, QAction, QInputDialog, QMessageBox
+from PyQt4.QtGui import QListWidget, QListWidgetItem, QInputDialog, QMessageBox
 from ljn.Model import Category
 from ljn.Repository import get_session
+from ljn.ui.UiUtil import create_widget_action
 
 class CategoryItem(QListWidgetItem):
     def __init__(self, category):
@@ -15,27 +16,9 @@ class CategoryList(QListWidget):
         QListWidget.__init__(self, parent)
 
         self.update_categories()
-        self.addAction(self._create_rename_action())
-        self.addAction(self._create_delete_action())
-        self.addAction(self._create_new_action())
-
-    def _create_new_action(self):
-        n = QAction("New", self)
-        n.setShortcut("CTRL+N")
-        n.triggered.connect(self._new_category)
-        return n
-
-    def _create_rename_action(self):
-        a = QAction("Rename", self)
-        a.setShortcut("F2")
-        a.triggered.connect(self._rename_category)
-        return a
-
-    def _create_delete_action(self):
-        a = QAction("Delete", self)
-        a.setShortcut("Del")
-        a.triggered.connect(self._del_category)
-        return a
+        self.addAction(create_widget_action(self, "F2", self._rename_category))
+        self.addAction(create_widget_action(self, "Del", self._del_category))
+        self.addAction(create_widget_action(self, "CTRL+N", self._new_category))
 
     def update_categories(self):
         self.clear()
