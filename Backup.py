@@ -89,7 +89,7 @@ def create_conn():
     return redis.Redis(up.hostname, up.port, password=up.password)
 
 def backup_data(r=None):
-    if not exists(DATA_FILE):
+    if not exists(DATA_FILE) or not exists(CFG_FILE):
         return None
 
     if r is None:
@@ -110,6 +110,9 @@ def backup_data(r=None):
 
 def update_data(r=None):
     """ @type r: Redis """
+    if not exists(CFG_FILE):
+        return
+
     if r is None:
         r = create_conn()
         if r is None:
