@@ -115,7 +115,7 @@ class ListDirector(object):
             al.addAction(create_widget_action(al, "Return", partial(self._open_article, window)))
 
         action = QAction(window)
-        action.setShortcut("CTRL+A")
+        action.setShortcut("CTRL+L")
         action.setShortcutContext(Qt.ApplicationShortcut)
         action.triggered.connect(partial(self._toggle_dock_pane_view, window))
         window.addAction(action)
