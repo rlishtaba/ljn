@@ -9,12 +9,14 @@ class WordItem(QListWidgetItem):
     def __init__(self, new_word):
         QListWidgetItem.__init__(self, new_word.word.word)
 
+        self.article_id = new_word.article_id
         self.word_content = new_word.word_content
 
 
 class WordList(QListWidget):
 
     onWordSelected = pyqtSignal(str)
+    onWordDeleted = pyqtSignal(int, str)
 
     def __init__(self, parent):
         QListWidget.__init__(self, parent)
@@ -24,6 +26,7 @@ class WordList(QListWidget):
 
         self.itemDoubleClicked.connect(self._select_item)
         self.addAction(create_widget_action(self, "Return", self._select_item))
+        self.addAction(create_widget_action(self, "Delete", self._delete_item))
 
     def update_words(self, article_id=None):
         self.clear()
@@ -45,3 +48,8 @@ class WordList(QListWidget):
         items = self.selectedItems()
         if items:
             self.onWordSelected.emit(items[0].word_content)
+
+    def _delete_item(self):
+        items = self.selectedItems()
+        if items:
+            self.onWordDeleted.emit(items[0].article_id, items[0].word_content)

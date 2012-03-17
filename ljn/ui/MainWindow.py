@@ -1,8 +1,9 @@
 #coding:utf8
 from functools import partial
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QAction, QDockWidget
+from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QAction, QDockWidget, QMessageBox
 from ljn.Event import EventPublisher
+from ljn.Model import ArticleNewWord
 from ljn.ui.UiUtil import create_widget_action
 
 class MainWindow(QMainWindow):
@@ -164,6 +165,8 @@ class WordDirector(object):
         if hasattr(window, 'article_browser_director'):
             window.word_list.onWordSelected.connect(window.article_browser.navigate_word)
 
+        window.word_list.onWordDeleted.connect(partial(self.del_word, window))
+
         action = QAction(window)
         action.setShortcut("CTRL+W")
         action.setShortcutContext(Qt.ApplicationShortcut)
@@ -172,6 +175,21 @@ class WordDirector(object):
 
         window.word_dock_pane.setWindowTitle('Words')
 
+    def del_word(self, window, article_id, word_content):
+        word_content = unicode(word_content)
+        msg = 'Delete "%s"?' % word_content
+        btn = QMessageBox.question(window, 'Delete word', msg, QMessageBox.Yes | QMessageBox.No)
+        if btn != QMessageBox.Yes:
+            return
+
+        from ljn.Repository import get_session
+        s = get_session()
+        anw = ArticleNewWord.find_by_article_word(s, article_id, word_content)
+        if anw is not None:
+            s.delete(anw)
+            s.commit()
+
+            self._update_word_list(window, article_id)
 
 class ArticleBrowserDirector(object):
     def __init__(self):
