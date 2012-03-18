@@ -4,7 +4,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMainWindow, QStackedLayout, QWidget, QAction, QDockWidget, QMessageBox
 from ljn.Event import EventPublisher
 from ljn.Model import ArticleNewWord
-from ljn.ui.UiUtil import create_widget_action
+from ljn.ui.UiUtil import create_widget_action, create_app_action
 
 class MainWindow(QMainWindow):
     onWindowCreate = EventPublisher(QMainWindow)
@@ -18,6 +18,14 @@ class MainWindow(QMainWindow):
 
         MainWindow.onWindowCreate.emit(self)
         MainWindow.onWindowInit.emit(self)
+
+        self.addAction(create_app_action(self, 'F11', self._toggle_full_screen))
+
+    def _toggle_full_screen(self):
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
 
 class ListDirector(object):
     def __init__(self):
@@ -124,11 +132,7 @@ class ListDirector(object):
             al.onArticleCreated.connect(partial(self._open_new_article, window))
             al.addAction(create_widget_action(al, "Return", partial(self._open_article, window)))
 
-        action = QAction(window)
-        action.setShortcut("CTRL+L")
-        action.setShortcutContext(Qt.ApplicationShortcut)
-        action.triggered.connect(partial(self._toggle_dock_pane_view, window))
-        window.addAction(action)
+        window.addAction(create_app_action(window, 'CTRL+L', partial(self._toggle_dock_pane_view, window)))
 
         cl.setFocus()
         if cl.count() > 0:
@@ -177,11 +181,7 @@ class WordDirector(object):
 
         window.word_list.onWordDeleted.connect(partial(self.del_word, window))
 
-        action = QAction(window)
-        action.setShortcut("CTRL+W")
-        action.setShortcutContext(Qt.ApplicationShortcut)
-        action.triggered.connect(lambda : window.word_dock_pane.toggleViewAction().trigger())
-        window.addAction(action)
+        window.addAction(create_app_action(window, 'CTRL+W', lambda : window.word_dock_pane.toggleViewAction().trigger()))
 
         window.word_dock_pane.setWindowTitle('Words')
 
