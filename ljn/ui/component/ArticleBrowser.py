@@ -1,9 +1,10 @@
 #coding:utf8
 from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtGui import QTextEdit, QColor, QSyntaxHighlighter, QTextCharFormat, QTextCursor
+from PyQt4.QtGui import QTextEdit, QColor, QSyntaxHighlighter, QTextCharFormat, QTextCursor, QMessageBox
 from string import ascii_letters
 from ljn.Model import ArticleNewWord, Article
 from ljn.Repository import get_session
+from ljn.ui.UiUtil import create_widget_action
 
 STYLE_SHEET = r'''
 QTextEdit {
@@ -99,11 +100,14 @@ class ArticleBrowser(QTextEdit):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._on_context_menu)
 
+        self.addAction(create_widget_action(self, 'Alt+Return', self._show_article_property))
+
         self.article_id = None
         self.new_words = []
         self.highlight = ArticleHighlight(self)
 
     def set_article(self, article):
+        self.article_title = article.title
         self.article_id = article.id
         content = article.content
         self.setText(content)
@@ -145,6 +149,16 @@ class ArticleBrowser(QTextEdit):
             s.commit()
 
         self._refresh()
+
+    def _show_article_property(self):
+        from ljn.util import word_count
+
+        content = unicode(self.toPlainText())
+        text = '''
+Words:    %d
+Letters:  %d
+        '''.strip() % (word_count(content), len(content))
+        QMessageBox.information(self, self.article_title, text)
 
     def navigate_word(self, word):
         start, len = self.highlight.get_position_of_word(word)
