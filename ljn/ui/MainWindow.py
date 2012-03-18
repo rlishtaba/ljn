@@ -94,6 +94,15 @@ class ListDirector(object):
 
         window.article_browser_director.open_article(window, item.article.id)
 
+    def _open_new_article(self, window, article_id):
+        al = window.article_list
+        for i in range(al.count()):
+            item = al.item(i)
+            if hasattr(item, 'article') and item.article.id == article_id:
+                al.setCurrentRow(i)
+                self._open_article(window)
+
+
     def _show_category_list(self, window):
         window.list_dock_pane.setWindowTitle("Category List")
         window.list_layout.setCurrentWidget(window.category_list)
@@ -108,10 +117,11 @@ class ListDirector(object):
 
         if hasattr(window, 'article_browser_director'):
             action = create_widget_action(window, "ESC", window.article_browser.setFocus)
-            window.article_list.addAction(action)
-            window.category_list.addAction(action)
+            al.addAction(action)
+            cl.addAction(action)
 
             al.itemDoubleClicked.connect(partial(self._open_article, window))
+            al.onArticleCreated.connect(partial(self._open_new_article, window))
             al.addAction(create_widget_action(al, "Return", partial(self._open_article, window)))
 
         action = QAction(window)

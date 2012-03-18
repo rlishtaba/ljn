@@ -1,4 +1,5 @@
 #coding:utf8
+from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtGui import QListWidget, QListWidgetItem, QInputDialog, QMessageBox
 from ljn.Model import Article, Category
 from ljn.Repository import get_session
@@ -13,6 +14,9 @@ class ArticleItem(QListWidgetItem):
 
 
 class ArticleList(QListWidget):
+
+    onArticleCreated = pyqtSignal(int)
+
     def __init__(self, parent):
         QListWidget.__init__(self, parent)
 
@@ -50,6 +54,8 @@ class ArticleList(QListWidget):
         s.add(article)
         s.commit()
         self.update_articles()
+
+        self.onArticleCreated.emit(article.id)
 
 
     def _rename_article(self):
