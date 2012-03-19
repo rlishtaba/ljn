@@ -1,6 +1,6 @@
 #coding:utf8
 from os.path import exists, join
-from PyQt4.QtGui import QApplication
+from PyQt4.QtGui import QApplication, QIcon
 import logging
 import g
 
@@ -42,6 +42,7 @@ def main():
     from ljn.ui.MainWindow import MainWindow, MainWindowDirector
     mwd = MainWindowDirector()
     mw = MainWindow()
+    mw.setWindowIcon(QIcon(join(g.ROOT, 'ljn.png')))
     mw.show()
     app.exec_()
 
